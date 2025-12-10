@@ -1,4 +1,3 @@
-// services/quickin.js
 require("dotenv").config();
 const axios = require("axios");
 
@@ -16,13 +15,29 @@ const api = axios.create({
 
 async function buscarVagas() {
   const resp = await api.get(`/accounts/${ACCOUNT_ID}/jobs?status=open`);
-  return resp.data; 
+  return resp.data?.docs ?? [];
 }
 
-async function buscarCandidatosDaVaga(vagaId) {
-  const resp = await api.get(`/accounts/${ACCOUNT_ID}/jobs/${vagaId}/candidates`);
-  return resp.data;
+async function buscarCandidatosDaVaga(jobId) {
+  const resp = await api.get(
+    `/accounts/${ACCOUNT_ID}/candidates`,
+    { params: { job_id: jobId } }
+  );
+
+  const docs = resp.data?.docs || [];
+
+  return docs.map((c) => ({
+    id: c._id,
+    nome: c.name,
+    email: c.email,
+    headline: c.headline,
+    cidade: c.city,
+    experienciaAtual:
+      c.experiences?.find(e => e.current_job)?.position || null,
+    raw: c
+  }));
 }
+
 
 module.exports = {
   buscarVagas,

@@ -1,4 +1,4 @@
-module.exports = () => ({
+module.exports = (vagas) => ({
   type: "modal",
   callback_id: "selecionar_vaga",
   title: {
@@ -22,12 +22,19 @@ module.exports = () => ({
         text: "Vaga"
       },
       element: {
-        type: "plain_text_input",
-        action_id: "vaga_input",
+        type: "static_select",
+        action_id: "vaga_select",
         placeholder: {
           type: "plain_text",
-          text: "Ex: Backend Developer"
-        }
+          text: "Selecione uma vaga"
+        },
+        options: vagas.map(vaga => ({
+          text: {
+            type: "plain_text",
+            text: vaga.title
+          },
+          value: vaga.id
+        }))
       }
     }
   ]

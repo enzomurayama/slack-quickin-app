@@ -10,55 +10,72 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-// Slash command: /rankear-cv
 app.command("/rankear-cv", async ({ ack, body, client }) => {
   await ack();
 
+  const vagas = await quickinService.buscarVagas();
+
   await client.views.open({
     trigger_id: body.trigger_id,
-    view: vagaModal()
+    view: vagaModal(vagas)
   });
 });
 
-// Submissão do modal
+
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
   await ack();
 
-  const vaga = view.state.values.vaga_block.vaga_input.value;
+  const selected = view.state.values?.vaga_block?.vaga_select?.selected_option;
 
-  const curriculos = await quickinService.buscarCurriculos(vaga);
+  if (!selected) {
+    await client.chat.postMessage({
+      channel: body.user.id,
+      text: "Erro ao identificar a vaga selecionada."
+    });
+    return;
+  }
+
+  const jobId = selected.value;
+  const vagaNome = selected.text.text;
+
+  await client.chat.postMessage({
+    channel: body.user.id,
+    text: "⏳ Iniciando análise dos currículos..."
+  });
+
+  const curriculos = await quickinService.buscarCandidatosDaVaga(jobId);
+
   const ranking = rankingService.rankear(curriculos);
 
-  // Publicação dos resultados no início do app
   await client.views.publish({
     user_id: body.user.id,
     view: homeRankingView({
-      vaga,
+      vaga: vagaNome,
       ranking
     })
   });
 
-// Mensagem de sucesso
-await client.chat.postMessage({
-  channel: body.user.id,
-  blocks: [
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "✅ *Rankeamento concluído com sucesso!*"
-      }
-    },
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "Os resultados estão disponíveis na aba *Home* do app."
+  await client.chat.postMessage({
+    channel: body.user.id,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "✅ *Análise concluída com sucesso!*"
+        }
       },
-    }
-  ]
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "Os resultados já estão disponíveis na aba *Home* do app."
+        }
+      },
+    ]
+  });
 });
-});
+
 
 (async () => {
   await app.start(3000);
