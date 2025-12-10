@@ -10,9 +10,7 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-/**
- * Slash command: /rankear-cv
- */
+// Slash command: /rankear-cv
 app.command("/rankear-cv", async ({ ack, body, client }) => {
   await ack();
 
@@ -22,9 +20,7 @@ app.command("/rankear-cv", async ({ ack, body, client }) => {
   });
 });
 
-/**
- * Submissão do modal
- */
+// Submissão do modal
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
   await ack();
 
@@ -42,7 +38,7 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
     })
   });
 
-  // Mensagem de sucesso
+// Mensagem de sucesso
 await client.chat.postMessage({
   channel: body.user.id,
   blocks: [
