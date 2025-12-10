@@ -1,32 +1,30 @@
+// services/quickin.js
+require("dotenv").config();
 const axios = require("axios");
 
-async function buscarCurriculos(vaga) {
-  // MOCK enquanto não integra de verdade
-  return [
-    {
-      id: "CAND_001",
-      nome: "Candidato 1",
-      experiencia: "3 anos com Node.js e APIs REST",
-      formacao: "Bacharel em Ciência da Computação"
-    },
-    {
-      id: "CAND_002",
-      nome: "Candidato 2",
-      experiencia: "5 anos com Java e Spring",
-      formacao: "Engenharia de Software"
-    }
-  ];
+const QUICKIN_BASE = process.env.QUICKIN_API_URL;
+const ACCOUNT_ID = process.env.QUICKIN_ACCOUNT_ID; 
+const TOKEN = process.env.QUICKIN_API_TOKEN;
 
-  /**
-   * REAL (exemplo)
-   *
-   * const response = await axios.get(
-   *   `${process.env.QUICKIN_API_URL}/curriculos?vaga=${vaga}`,
-   *   { headers: { Authorization: `Bearer ${process.env.QUICKIN_API_TOKEN}` } }
-   * );
-   *
-   * return response.data;
-   */
+const api = axios.create({
+  baseURL: QUICKIN_BASE,
+  headers: {
+    Authorization: `Bearer ${TOKEN}`,
+    "Content-Type": "application/json"
+  }
+});
+
+async function buscarVagas() {
+  const resp = await api.get(`/accounts/${ACCOUNT_ID}/jobs?status=open`);
+  return resp.data; 
 }
 
-module.exports = { buscarCurriculos };
+async function buscarCandidatosDaVaga(vagaId) {
+  const resp = await api.get(`/accounts/${ACCOUNT_ID}/jobs/${vagaId}/candidates`);
+  return resp.data;
+}
+
+module.exports = {
+  buscarVagas,
+  buscarCandidatosDaVaga
+};
