@@ -19,25 +19,43 @@ async function buscarVagas() {
 }
 
 async function buscarCandidatosDaVaga(jobId) {
-  const resp = await api.get(
-    `/accounts/${ACCOUNT_ID}/candidates`,
-    { params: { job_id: jobId } }
-  );
+  let page = 1;
+  let allCandidates = [];
+  let totalPages = 1;
 
-  const docs = resp.data?.docs || [];
+  do {
+    try {
+      const resp = await api.get(`/accounts/${ACCOUNT_ID}/candidates`, {
+        params: { job_id: jobId, page }
+      });
 
-  return docs.map((c) => ({
+      const { docs, pages } = resp.data;
+      allCandidates.push(...docs);
+      totalPages = pages;
+      page++;
+
+      // Pausa de 500ms entre as páginas para não estourar o rate limit
+      await new Promise(r => setTimeout(r, 500));
+    } catch (err) {
+      if (err.response?.status === 429) {
+        console.log("Rate limit atingido, aguardando 2s...");
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        throw err;
+      }
+    }
+  } while (page <= totalPages);
+
+  return allCandidates.map((c) => ({
     id: c._id,
     nome: c.name,
     email: c.email,
     headline: c.headline,
     cidade: c.city,
-    experienciaAtual:
-      c.experiences?.find(e => e.current_job)?.position || null,
+    experienciaAtual: c.experiences?.find(e => e.current_job)?.position || null,
     raw: c
   }));
 }
-
 
 module.exports = {
   buscarVagas,

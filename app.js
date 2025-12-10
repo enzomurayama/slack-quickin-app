@@ -76,6 +76,30 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
   });
 });
 
+app.action("prev_page", async ({ ack, body, client }) => {
+  await ack();
+  const page = parseInt(body.actions[0].value);
+  const ranking = body.view.private_metadata_ranking; 
+  const vaga = body.view.private_metadata_vaga;
+
+  await client.views.publish({
+    user_id: body.user.id,
+    view: homeRankingView({ vaga, ranking, page })
+  });
+});
+
+app.action("next_page", async ({ ack, body, client }) => {
+  await ack();
+  const page = parseInt(body.actions[0].value);
+  const ranking = body.view.private_metadata_ranking;
+  const vaga = body.view.private_metadata_vaga;
+
+  await client.views.publish({
+    user_id: body.user.id,
+    view: homeRankingView({ vaga, ranking, page })
+  });
+});
+
 
 (async () => {
   await app.start(3000);
