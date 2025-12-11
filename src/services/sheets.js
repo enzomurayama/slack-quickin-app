@@ -55,11 +55,12 @@ async function escreverCandidatos(candidatos, vagaNome) {
     c.raw?.city || "",
     c.raw?.region || "",
     c.raw?.summary || "",
+    c.raw?.resume_media_id.url || ""
   ]);
 
   // Cabeçalho
   values.unshift([
-    "Score", "Nome", "Email", "Telefones", "Data de Nascimento", "Headline", "Cidade", "Região", "Resumo"
+    "Score", "Nome", "Email", "Telefones", "Data de Nascimento", "Headline", "Cidade", "Região", "Resumo", "Currículo"
   ]);
 
   // Verificar se a aba existe
@@ -142,14 +143,14 @@ async function escreverCandidatos(candidatos, vagaNome) {
             fields: "pixelSize"
           }
         },
-        // Limitar largura da coluna de resumo
+        // Limitar largura da coluna de resumo e currículo
         {
           updateDimensionProperties: {
             range: {
               sheetId,
               dimension: "COLUMNS",
               startIndex: 8,
-              endIndex: 9
+              endIndex: 10
             },
             properties: { pixelSize: 600 },
             fields: "pixelSize"
@@ -163,7 +164,7 @@ async function escreverCandidatos(candidatos, vagaNome) {
               startRowIndex: 1,
               endRowIndex: numLinhas,
               startColumnIndex: 8,
-              endColumnIndex: 9
+              endColumnIndex: 10
             },
             cell: {
               userEnteredFormat: {
