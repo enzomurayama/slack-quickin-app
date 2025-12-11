@@ -4,7 +4,6 @@ const quickinService = require("./services/quickin");
 const rankingService = require("./services/ranking");
 const sheetsService = require("./services/sheets");
 const vagaModal = require("./views/selecionarVaga");
-const homeRankingView = require("./views/homeRanking");
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -71,52 +70,9 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
   // Enviar para Google Sheets
   await sheetsService.escreverCandidatos(rankingCompleto);
 
-  // Publicar ranking na Home
-  await client.views.publish({
-    user_id: body.user.id,
-    view: homeRankingView({
-      vaga: vagaNome,
-      ranking,
-      page: 1,
-      private_metadata: JSON.stringify({ ranking, vaga: vagaNome }) 
-    })
-  });
-
   await client.chat.postMessage({
     channel: body.user.id,
-    text: "✅ Análise concluída! Os resultados estão na aba *Home* do app."
-  });
-});
-
-// Paginação - página anterior
-app.action("prev_page", async ({ ack, body, client }) => {
-  await ack();
-
-  const metadata = JSON.parse(body.view.private_metadata || "{}");
-  const ranking = metadata.ranking || [];
-  const vaga = metadata.vaga || "";
-
-  const page = Math.max(parseInt(body.actions[0].value), 1);
-
-  await client.views.publish({
-    user_id: body.user.id,
-    view: homeRankingView({ vaga, ranking, page, private_metadata: body.view.private_metadata })
-  });
-});
-
-// Paginação - próxima página
-app.action("next_page", async ({ ack, body, client }) => {
-  await ack();
-
-  const metadata = JSON.parse(body.view.private_metadata || "{}");
-  const ranking = metadata.ranking || [];
-  const vaga = metadata.vaga || "";
-
-  const page = parseInt(body.actions[0].value);
-
-  await client.views.publish({
-    user_id: body.user.id,
-    view: homeRankingView({ vaga, ranking, page, private_metadata: body.view.private_metadata })
+    text: "✅ Análise concluída! Os resultados estão na planilha."
   });
 });
 
