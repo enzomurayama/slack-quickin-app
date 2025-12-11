@@ -24,6 +24,15 @@ async function getSheetIdByName(sheetName) {
   return sheet ? sheet.properties.sheetId : null;
 }
 
+async function limparAba(sheetName) {
+  const sheets = google.sheets({ version: "v4", auth });
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: process.env.SHEET_ID,
+    range: `${sheetName}!A:Z`
+  });
+}
+
 async function criarAba(sheetName) {
   const request = {
     spreadsheetId: SHEET_ID,
@@ -201,4 +210,4 @@ async function escreverCandidatos(candidatos, vagaNome) {
   });
 }
 
-module.exports = { escreverCandidatos };
+module.exports = { limparAba, escreverCandidatos };

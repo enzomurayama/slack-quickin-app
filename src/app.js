@@ -120,11 +120,34 @@ async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
 
 // Seleção da vaga
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
-  await ack();
-
   const selected = view.state.values?.vaga_block?.vaga_select?.selected_option;
-  if (!selected) return;
+  const numCandidatosInput = view.state.values?.num_candidatos_block?.num_candidatos?.value;
 
+  let errors = {};
+
+  // ✔ Validação do campo numérico
+  if (numCandidatosInput && numCandidatosInput.trim() !== "") {
+    const num = Number(numCandidatosInput);
+
+    if (isNaN(num)) {
+      errors["num_candidatos_block"] = "Digite apenas números.";
+    } else if (num <= 0) {
+      errors["num_candidatos_block"] = "O número deve ser maior que zero.";
+    } else if (num > 9999) {
+      errors["num_candidatos_block"] = "Número muito alto. Insira um valor menor que 10000.";
+    }
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return await ack({
+      response_action: "errors",
+      errors
+    });
+  }
+
+  await ack(); 
+
+  const numCandidatos = numCandidatosInput ? Number(numCandidatosInput) : null;
   const jobId = selected.value;
 
   process.nextTick(async () => {
@@ -138,13 +161,22 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
         return;
       }
 
+      // Rankear
       const ranking = rankingService.rankear(curriculos);
 
-      const rankingCompleto = ranking.map(r => {
+      // Filtrar por número de candidatos
+      const rankingLimitado = numCandidatos
+        ? ranking.slice(0, numCandidatos)
+        : ranking;
+
+      // Montar dados completos
+      const rankingCompleto = rankingLimitado.map(r => {
         const candidato = curriculos.find(c => c._id === r.id || c.id === r.id);
         return { ...candidato, score: r.score };
       });
 
+      // Exportar para o Sheets
+      await sheetsService.limparAba(selected.text.text);
       await sheetsService.escreverCandidatos(rankingCompleto, selected.text.text);
 
       const linkPlanilha = `https://docs.google.com/spreadsheets/d/${process.env.SHEET_ID}`;
