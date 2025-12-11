@@ -24,7 +24,7 @@ app.command("/rankear-cv", async ({ ack, body, client }) => {
 
 // Selecionar vaga
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
-  await ack(); // sempre primeiro
+  await ack(); 
 
   const selected = view.state.values?.vaga_block?.vaga_select?.selected_option;
   if (!selected) return;
@@ -54,7 +54,7 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
         return { ...candidato, score: r.score };
       });
 
-      await sheetsService.escreverCandidatos(rankingCompleto);
+      await sheetsService.escreverCandidatos(rankingCompleto, selected.text.text);
 
       await client.chat.postMessage({
         channel: body.user.id,

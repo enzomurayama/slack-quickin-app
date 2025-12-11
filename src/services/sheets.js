@@ -18,7 +18,32 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("pt-BR");
 }
 
-async function escreverCandidatos(candidatos) {
+async function getSheetIdByName(sheetName) {
+  const res = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+  const sheet = res.data.sheets.find(s => s.properties.title === sheetName);
+  return sheet ? sheet.properties.sheetId : null;
+}
+
+async function criarAba(sheetName) {
+  const request = {
+    spreadsheetId: SHEET_ID,
+    resource: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: sheetName
+            }
+          }
+        }
+      ]
+    }
+  };
+  const res = await sheets.spreadsheets.batchUpdate(request);
+  return res.data.replies[0].addSheet.properties.sheetId;
+}
+
+async function escreverCandidatos(candidatos, vagaNome) {
   // Transformando candidatos em array de arrays
   const values = candidatos.map(c => [
     c.score || 0,
@@ -37,11 +62,17 @@ async function escreverCandidatos(candidatos) {
     "Score", "Nome", "Email", "Telefones", "Data de Nascimento", "Headline", "Cidade", "Região", "Resumo"
   ]);
 
+  // Verificar se a aba existe
+  let sheetId = await getSheetIdByName(vagaNome);
+  if (!sheetId) {
+    sheetId = await criarAba(vagaNome);
+  }
+
   // Determinando range
   const numLinhas = values.length;
   const numColunas = values[0].length;
   const ultimaColuna = String.fromCharCode(64 + numColunas); 
-  const range = `'Candidatos'!A1:${ultimaColuna}${numLinhas}`;
+  const range = `'${vagaNome}'!A1:${ultimaColuna}${numLinhas}`;
 
   // Atualizando valores
   await sheets.spreadsheets.values.update({
@@ -51,135 +82,122 @@ async function escreverCandidatos(candidatos) {
     resource: { values }
   });
 
-  console.log("✅ Dados enviados para o Google Sheets!");
-
+  // Formatação da aba (igual ao que você já tinha)
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
     requestBody: {
-        requests: [
+      requests: [
         // Auto-ajustar largura das colunas
         {
-            autoResizeDimensions: {
+          autoResizeDimensions: {
             dimensions: {
-                sheetId: 0,
-                dimension: "COLUMNS",
-                startIndex: 0,
-                endIndex: numColunas
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: 0,
+              endIndex: numColunas
             }
-            }
+          }
         },
         // Altura fixa das linhas
         {
-            updateDimensionProperties: {
+          updateDimensionProperties: {
             range: {
-                sheetId: 0,
-                dimension: "ROWS",
-                startIndex: 0,
-                endIndex: numLinhas
+              sheetId,
+              dimension: "ROWS",
+              startIndex: 0,
+              endIndex: numLinhas
             },
             properties: {
-                pixelSize: 30
+              pixelSize: 30
             },
             fields: "pixelSize"
-            }
+          }
         },
         // Centralizar verticalmente todas as células
         {
-            repeatCell: {
+          repeatCell: {
             range: {
-                sheetId: 0,
-                startRowIndex: 0,
-                endRowIndex: numLinhas,
-                startColumnIndex: 0,
-                endColumnIndex: numColunas
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: numLinhas,
+              startColumnIndex: 0,
+              endColumnIndex: numColunas
             },
             cell: {
-                userEnteredFormat: {
-                verticalAlignment: "MIDDLE"
-                }
+              userEnteredFormat: { verticalAlignment: "MIDDLE" }
             },
             fields: "userEnteredFormat.verticalAlignment"
-            }
+          }
         },
         // Limitar largura da coluna de data
         {
-            updateDimensionProperties: {
-                range: {
-                sheetId: 0,
-                dimension: "COLUMNS",
-                startIndex: 4,
-                endIndex: 5
-                },
-                properties: {
-                pixelSize: 200 
-                },
-                fields: "pixelSize"
-            }
+          updateDimensionProperties: {
+            range: {
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: 4,
+              endIndex: 5
+            },
+            properties: { pixelSize: 200 },
+            fields: "pixelSize"
+          }
         },
         // Limitar largura da coluna de resumo
         {
-            updateDimensionProperties: {
+          updateDimensionProperties: {
             range: {
-                sheetId: 0,
-                dimension: "COLUMNS",
-                startIndex: 8,
-                endIndex: 9
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: 8,
+              endIndex: 9
             },
-            properties: {
-                pixelSize: 600 
-            },
+            properties: { pixelSize: 600 },
             fields: "pixelSize"
-            }
+          }
         },
         // Wrap e alinhamento vertical na coluna
         {
-            repeatCell: {
-                range: {
-                    sheetId: 0,
-                    startRowIndex: 1,
-                    endRowIndex: numLinhas,
-                    startColumnIndex: 8,
-                    endColumnIndex: 9
-                },
-                cell: {
-                    userEnteredFormat: {
-                        wrapStrategy: "WRAP",
-                        verticalAlignment: "TOP"
-                    }
-                },
-                fields: "userEnteredFormat(wrapStrategy, verticalAlignment)"
-            }
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 1,
+              endRowIndex: numLinhas,
+              startColumnIndex: 8,
+              endColumnIndex: 9
+            },
+            cell: {
+              userEnteredFormat: {
+                wrapStrategy: "WRAP",
+                verticalAlignment: "TOP"
+              }
+            },
+            fields: "userEnteredFormat(wrapStrategy, verticalAlignment)"
+          }
         },
         // Alterar cor de fundo do cabeçalho (linha 1)
         {
-            repeatCell: {
+          repeatCell: {
             range: {
-                sheetId: 0,
-                startRowIndex: 0,
-                endRowIndex: 1,
-                startColumnIndex: 0,
-                endColumnIndex: numColunas
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: 1,
+              startColumnIndex: 0,
+              endColumnIndex: numColunas
             },
             cell: {
-                userEnteredFormat: {
-                backgroundColor: {
-                    red: 0.9,
-                    green: 0.9,
-                    blue: 0.9
-                },
+              userEnteredFormat: {
+                backgroundColor: { red: 0.9, green: 0.9, blue: 0.9 },
                 horizontalAlignment: "CENTER",
                 verticalAlignment: "MIDDLE",
-                textFormat: {
-                    bold: true
-                }
-                }
+                textFormat: { bold: true }
+              }
             },
             fields: "userEnteredFormat(backgroundColor, horizontalAlignment, verticalAlignment, textFormat)"
-            }
+          }
         }
-        ]
+      ]
     }
-    });
+  });
 }
 
 module.exports = { escreverCandidatos };
