@@ -10,45 +10,136 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-// Comando: /rankear-cv 
+// Comando: /clean-home
+app.command("/clean-home", async ({ ack, body, client }) => {
+  await ack();
+
+  try {
+    await client.views.publish({
+      user_id: body.user_id,
+      view: { type: "home", blocks: [] }
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// Comando: /rankear-cv
 app.command("/rankear-cv", async ({ ack, body, client }) => {
   await ack();
 
-  const vagas = await quickinService.buscarVagas();
-
-  await client.views.open({
+  const placeholder = await client.views.open({
     trigger_id: body.trigger_id,
-    view: vagaModal(vagas)
+    view: {
+      type: "modal",
+      callback_id: "carregando_vagas",
+      title: { type: "plain_text", text: "Carregando vagas..." },
+      blocks: [
+        {
+          type: "section",
+          text: { type: "mrkdwn", text: "⏳ *Buscando vagas no Quickin...*\nAguarde um momento." }
+        }
+      ]
+    }
+  });
+
+  process.nextTick(async () => {
+    const vagas = await quickinService.buscarVagas();
+
+    await client.views.update({
+      view_id: placeholder.view.id,
+      view: vagaModal(vagas)
+    });
   });
 });
 
-// Selecionar vaga
+
+// Atualiza Home Tab
+async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
+  const blocks = [];
+
+  blocks.push({
+    type: "header",
+    text: { type: "plain_text", text: "HireLens Dashboard", emoji: true }
+  });
+
+  blocks.push({ type: "divider" });
+
+  if (status === "iniciando") {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "⏳ *Análise iniciada!*\nEstamos processando os currículos..."
+      }
+    });
+
+    blocks.push({
+      type: "context",
+      elements: [{ type: "mrkdwn", text: "💡 Isso pode levar alguns instantes." }]
+    });
+
+  } else if (status === "concluido") {
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: "✅ *Análise concluída!*" }
+    });
+
+    if (linkPlanilha) {
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: { type: "plain_text", text: "📊 Abrir Google Sheets", emoji: true },
+            url: linkPlanilha,
+            style: "primary"
+          }
+        ]
+      });
+    }
+
+    blocks.push({
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: "🕒 Atualizado em <!date^" +
+            Math.floor(Date.now() / 1000) +
+            "^{date_short_pretty} {time}|Agora>"
+        }
+      ]
+    });
+  }
+
+  await client.views.publish({
+    user_id: userId,
+    view: { type: "home", blocks }
+  });
+}
+
+// Seleção da vaga
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
-  await ack(); 
+  await ack();
 
   const selected = view.state.values?.vaga_block?.vaga_select?.selected_option;
   if (!selected) return;
 
   const jobId = selected.value;
 
-  client.chat.postMessage({
-    channel: body.user.id,
-    text: "⏳ Iniciando análise dos currículos..."
-  }).catch(console.error);
-
-  // Processamento pesado sem bloquear o ack
   process.nextTick(async () => {
     try {
+      await atualizarHomeTab(client, body.user.id, "iniciando");
+
       const curriculos = await quickinService.buscarCandidatosDaVaga(jobId);
+
       if (!curriculos || curriculos.length === 0) {
-        await client.chat.postMessage({
-          channel: body.user.id,
-          text: "❌ Nenhum currículo encontrado para esta vaga."
-        });
+        await atualizarHomeTab(client, body.user.id, "concluido", null);
         return;
       }
 
       const ranking = rankingService.rankear(curriculos);
+
       const rankingCompleto = ranking.map(r => {
         const candidato = curriculos.find(c => c._id === r.id || c.id === r.id);
         return { ...candidato, score: r.score };
@@ -56,22 +147,19 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
 
       await sheetsService.escreverCandidatos(rankingCompleto, selected.text.text);
 
-      await client.chat.postMessage({
-        channel: body.user.id,
-        text: `✅ Análise concluída! Abra a planilha neste link: <https://docs.google.com/spreadsheets/d/${process.env.SHEET_ID}|Clique aqui>`,
-      });
+      const linkPlanilha = `https://docs.google.com/spreadsheets/d/${process.env.SHEET_ID}`;
+
+      await atualizarHomeTab(client, body.user.id, "concluido", linkPlanilha);
+
     } catch (err) {
       console.error(err);
-      await client.chat.postMessage({
-        channel: body.user.id,
-        text: "❌ Ocorreu um erro durante a análise dos currículos."
-      });
+      await atualizarHomeTab(client, body.user.id, "concluido", null);
     }
   });
 });
 
-// Start app
+// Start
 (async () => {
   await app.start(3000);
-  console.log("⚡ Slack App rodando na porta 3000");
+  console.log("⚡ HireLens Slack App rodando na porta 3000");
 })();
