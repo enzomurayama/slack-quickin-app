@@ -21,6 +21,7 @@ function formatDate(dateStr) {
 async function escreverCandidatos(candidatos) {
   // Transformando candidatos em array de arrays
   const values = candidatos.map(c => [
+    c.score || 0,
     c.nome || "",
     c.email || "",
     (c.raw?.phones || []).join(", "),
@@ -29,12 +30,11 @@ async function escreverCandidatos(candidatos) {
     c.raw?.city || "",
     c.raw?.region || "",
     c.raw?.summary || "",
-    c.score || 0
   ]);
 
   // Cabeçalho
   values.unshift([
-    "Nome", "Email", "Telefones", "Data de Nascimento", "Headline", "Cidade", "Região", "Resumo", "Score"
+    "Score", "Nome", "Email", "Telefones", "Data de Nascimento", "Headline", "Cidade", "Região", "Resumo"
   ]);
 
   // Determinando range
@@ -57,20 +57,34 @@ async function escreverCandidatos(candidatos) {
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
     requestBody: {
-      requests: [
+        requests: [
         {
-          autoResizeDimensions: {
+            autoResizeDimensions: {
             dimensions: {
-              sheetId: 0,
-              dimension: "COLUMNS",
-              startIndex: 0,
-              endIndex: numColunas
+                sheetId: 0,
+                dimension: "COLUMNS",
+                startIndex: 0,
+                endIndex: numColunas
             }
-          }
+            }
+        },
+        {
+            updateDimensionProperties: {
+            range: {
+                sheetId: 0,
+                dimension: "ROWS",
+                startIndex: 0,
+                endIndex: numLinhas
+            },
+            properties: {
+                pixelSize: 30 // Altura fixa em pixels
+            },
+            fields: "pixelSize"
+            }
         }
-      ]
+        ]
     }
-  });
+    });
 }
 
 module.exports = { escreverCandidatos };
