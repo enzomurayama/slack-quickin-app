@@ -35,11 +35,11 @@ async function buscarCandidatosDaVaga(jobId) {
       page++;
 
       // Pausa de 500ms entre as páginas para não estourar o rate limit
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 1000));
     } catch (err) {
       if (err.response?.status === 429) {
-        console.log("Rate limit atingido, aguardando 2s...");
-        await new Promise(r => setTimeout(r, 2000));
+        console.log("Rate limit atingido, aguardando 1s...");
+        await new Promise(r => setTimeout(r, 1000));
       } else {
         throw err;
       }
