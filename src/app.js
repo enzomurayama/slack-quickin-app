@@ -5,6 +5,13 @@ const rankingService = require("./services/ranking");
 const sheetsService = require("./services/sheets");
 const vagaModal = require("./views/selecionarVaga");
 
+// Função para alterar a cor do score na planilha
+function getColor(score) {
+  if (score < 50) return "red";
+  if (score < 80) return "yellow";
+  return "green";
+}
+
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET
@@ -167,6 +174,7 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
 
       // Rankear
       const ranking = rankingService.rankear(curriculos);
+      ranking.sort((a, b) => b.score - a.score);
 
       // Filtrar por número de candidatos
       const rankingLimitado = numCandidatos
@@ -176,7 +184,11 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
       // Montar dados completos
       const rankingCompleto = rankingLimitado.map(r => {
         const candidato = curriculos.find(c => c._id === r.id || c.id === r.id);
-        return { ...candidato, score: r.score };
+        return { 
+          ...candidato, 
+          score: r.score,
+          cor: getColor(r.score)
+        };
       });
 
       // Exportar para o Sheets
