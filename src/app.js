@@ -53,14 +53,13 @@ app.command("/rankear-cv", async ({ ack, body, client }) => {
   });
 });
 
-
 // Atualiza Home Tab
 async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
   const blocks = [];
 
   blocks.push({
     type: "header",
-    text: { type: "plain_text", text: "HireLens Dashboard", emoji: true }
+    text: { type: "plain_text", text: "Dashboard de Análise", emoji: true }
   });
 
   blocks.push({ type: "divider" });
@@ -70,19 +69,22 @@ async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "⏳ *Análise iniciada!*\nEstamos processando os currículos..."
+        text:
+          "*Iniciando análise dos currículos...*\n\n" +
+          "Estamos processando os dados e aplicando o modelo de ranqueamento.\n\n" +
+          "Isso deve levar apenas alguns instantes."
       }
     });
-
-    blocks.push({
-      type: "context",
-      elements: [{ type: "mrkdwn", text: "💡 Isso pode levar alguns instantes." }]
-    });
-
   } else if (status === "concluido") {
     blocks.push({
       type: "section",
-      text: { type: "mrkdwn", text: "✅ *Análise concluída!*" }
+      text: {
+        type: "mrkdwn",
+        text:
+          "*Análise concluída com sucesso!*\n\n" +
+          "Os currículos foram avaliados, ranqueados e exportados conforme solicitado.\n" +
+          "Você pode acessar o resultado completo abaixo:"
+      }
     });
 
     if (linkPlanilha) {
@@ -91,7 +93,7 @@ async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
         elements: [
           {
             type: "button",
-            text: { type: "plain_text", text: "📊 Abrir Google Sheets", emoji: true },
+            text: { type: "plain_text", text: "📁 Abrir Planilha de Resultados", emoji: true },
             url: linkPlanilha,
             style: "primary"
           }
@@ -104,9 +106,10 @@ async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
       elements: [
         {
           type: "mrkdwn",
-          text: "🕒 Atualizado em <!date^" +
+          text:
+            "🕒 *Última atualização:* <!date^" +
             Math.floor(Date.now() / 1000) +
-            "^{date_short_pretty} {time}|Agora>"
+            "^{date_short_pretty} às {time}|Agora>"
         }
       ]
     });
@@ -118,6 +121,7 @@ async function atualizarHomeTab(client, userId, status, linkPlanilha = null) {
   });
 }
 
+
 // Seleção da vaga
 app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
   const selected = view.state.values?.vaga_block?.vaga_select?.selected_option;
@@ -125,7 +129,7 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
 
   let errors = {};
 
-  // ✔ Validação do campo numérico
+  // Validação do campo numérico
   if (numCandidatosInput && numCandidatosInput.trim() !== "") {
     const num = Number(numCandidatosInput);
 
