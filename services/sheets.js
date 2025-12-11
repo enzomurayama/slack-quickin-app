@@ -53,11 +53,11 @@ async function escreverCandidatos(candidatos) {
 
   console.log("✅ Dados enviados para o Google Sheets!");
 
-  // Auto-ajustar a largura de todas as colunas
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
     requestBody: {
         requests: [
+        // Auto-ajustar largura das colunas
         {
             autoResizeDimensions: {
             dimensions: {
@@ -68,6 +68,7 @@ async function escreverCandidatos(candidatos) {
             }
             }
         },
+        // Altura fixa das linhas
         {
             updateDimensionProperties: {
             range: {
@@ -77,9 +78,103 @@ async function escreverCandidatos(candidatos) {
                 endIndex: numLinhas
             },
             properties: {
-                pixelSize: 30 // Altura fixa em pixels
+                pixelSize: 30
             },
             fields: "pixelSize"
+            }
+        },
+        // Centralizar verticalmente todas as células
+        {
+            repeatCell: {
+            range: {
+                sheetId: 0,
+                startRowIndex: 0,
+                endRowIndex: numLinhas,
+                startColumnIndex: 0,
+                endColumnIndex: numColunas
+            },
+            cell: {
+                userEnteredFormat: {
+                verticalAlignment: "MIDDLE"
+                }
+            },
+            fields: "userEnteredFormat.verticalAlignment"
+            }
+        },
+        // Limitar largura da coluna de data
+        {
+            updateDimensionProperties: {
+                range: {
+                sheetId: 0,
+                dimension: "COLUMNS",
+                startIndex: 4,
+                endIndex: 5
+                },
+                properties: {
+                pixelSize: 200 
+                },
+                fields: "pixelSize"
+            }
+        },
+        // Limitar largura da coluna de resumo
+        {
+            updateDimensionProperties: {
+            range: {
+                sheetId: 0,
+                dimension: "COLUMNS",
+                startIndex: 8,
+                endIndex: 9
+            },
+            properties: {
+                pixelSize: 600 
+            },
+            fields: "pixelSize"
+            }
+        },
+        // Wrap e alinhamento vertical na coluna
+        {
+            repeatCell: {
+                range: {
+                    sheetId: 0,
+                    startRowIndex: 1,
+                    endRowIndex: numLinhas,
+                    startColumnIndex: 8,
+                    endColumnIndex: 9
+                },
+                cell: {
+                    userEnteredFormat: {
+                        wrapStrategy: "WRAP",
+                        verticalAlignment: "TOP"
+                    }
+                },
+                fields: "userEnteredFormat(wrapStrategy, verticalAlignment)"
+            }
+        },
+        // Alterar cor de fundo do cabeçalho (linha 1)
+        {
+            repeatCell: {
+            range: {
+                sheetId: 0,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 0,
+                endColumnIndex: numColunas
+            },
+            cell: {
+                userEnteredFormat: {
+                backgroundColor: {
+                    red: 0.9,
+                    green: 0.9,
+                    blue: 0.9
+                },
+                horizontalAlignment: "CENTER",
+                verticalAlignment: "MIDDLE",
+                textFormat: {
+                    bold: true
+                }
+                }
+            },
+            fields: "userEnteredFormat(backgroundColor, horizontalAlignment, verticalAlignment, textFormat)"
             }
         }
         ]
