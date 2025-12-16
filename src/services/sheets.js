@@ -204,6 +204,85 @@ async function escreverCandidatos(candidatos, vagaNome) {
             },
             fields: "userEnteredFormat(backgroundColor, horizontalAlignment, verticalAlignment, textFormat)"
           }
+        },
+        // Formatação condicional por cor do score
+        {
+          addConditionalFormatRule: {
+            rule: {
+              ranges: [
+                {
+                  sheetId,
+                  startRowIndex: 1,  
+                  endRowIndex: numLinhas,
+                  startColumnIndex: 0, 
+                  endColumnIndex: 1
+                }
+              ],
+              booleanRule: {
+                condition: {
+                  type: "NUMBER_LESS",
+                  values: [{ userEnteredValue: "50" }]
+                },
+                format: {
+                  backgroundColor: { red: 1, green: 0.6, blue: 0.6 }
+                }
+              }
+            },
+            index: 0
+          }
+        },
+        {
+          addConditionalFormatRule: {
+            rule: {
+              ranges: [
+                {
+                  sheetId,
+                  startRowIndex: 1,
+                  endRowIndex: numLinhas,
+                  startColumnIndex: 0,
+                  endColumnIndex: 1
+                }
+              ],
+              booleanRule: {
+                condition: {
+                  type: "NUMBER_BETWEEN",
+                  values: [
+                    { userEnteredValue: "50" },
+                    { userEnteredValue: "80" }
+                  ]
+                },
+                format: {
+                  backgroundColor: { red: 1, green: 1, blue: 0.6 }
+                }
+              }
+            },
+            index: 1
+          }
+        },
+        {
+          addConditionalFormatRule: {
+            rule: {
+              ranges: [
+                {
+                  sheetId,
+                  startRowIndex: 1,
+                  endRowIndex: numLinhas,
+                  startColumnIndex: 0,
+                  endColumnIndex: 1
+                }
+              ],
+              booleanRule: {
+                condition: {
+                  type: "NUMBER_GREATER",
+                  values: [{ userEnteredValue: "80" }]
+                },
+                format: {
+                  backgroundColor: { red: 0.7, green: 1, blue: 0.7 }
+                }
+              }
+            },
+            index: 2
+          }
         }
       ]
     }

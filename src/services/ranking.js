@@ -1,10 +1,9 @@
 function rankear(curriculos) {
-  return curriculos.map((c, index) => ({
+  return curriculos.map(c => ({
     id: c.id,
     nome: c.nome,
-    score: 80 - index * 10
+    score: Math.floor(Math.random() * 101) 
   }));
 }
 
 module.exports = { rankear };
-
