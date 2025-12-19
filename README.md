@@ -26,6 +26,16 @@ Tecnologias utilizadas: Node.js, JavaScript, Slack Bolt e Google Sheets API.
 
 <br>
 
+## **🤖 Criação do Slack App**
+
+Este projeto requer um Slack App configurado no workspace.
+
+Siga o guia oficial do Slack (Bolt para Node.js) para criar o app, configurar permissões e obter os tokens:
+
+👉 https://api.slack.com/start/building/bolt-js
+
+<br>
+
 ## 🪛 Configurações Iniciais
 
 Clone o repositório
