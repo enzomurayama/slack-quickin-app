@@ -26,6 +26,17 @@ Tecnologias utilizadas: Node.js, JavaScript, Slack Bolt e Google Sheets API.
 
 <br>
 
+## **🌐 Uso do ngrok (Ambiente de Desenvolvimento)**
+
+Durante o desenvolvimento local, o Slack precisa conseguir enviar eventos e comandos para a sua aplicação, o que exige uma URL pública acessível pela internet.
+Como o projeto roda localmente (localhost), uma solução prática é utilizar o ngrok.
+
+O ngrok cria um túnel seguro que expõe sua aplicação local em uma URL pública temporária, permitindo que o Slack se comunique com ela sem necessidade de deploy.
+
+Após iniciar o ngrok, utilize a URL pública gerada para configurar o Slack App.
+
+<br>
+
 ## **🤖 Criação do Slack App**
 
 Este projeto requer um Slack App configurado no workspace.
