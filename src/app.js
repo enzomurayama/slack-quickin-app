@@ -168,12 +168,22 @@ app.view("selecionar_vaga", async ({ ack, body, view, client }) => {
       const curriculos = await quickinService.buscarCandidatosDaVaga(jobId);
 
       if (!curriculos || curriculos.length === 0) {
+        console.log("Nenhum currículo encontrado.");
         await atualizarHomeTab(client, body.user.id, "concluido", null);
         return;
       }
 
+      const curriculosLimitados = curriculos.slice(0, 1);
+
       // Rankear
-      const ranking = rankingService.rankear(curriculos);
+      const ranking = await rankingService.rankear(curriculosLimitados, selected.value);
+
+      if (!ranking || !Array.isArray(ranking)) {
+        console.error("Erro: Ranking retornou inválido");
+        await atualizarHomeTab(client, body.user.id, "concluido", null);
+        return;
+      }
+
       ranking.sort((a, b) => b.score - a.score);
 
       // Filtrar por número de candidatos
