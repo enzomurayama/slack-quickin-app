@@ -7,17 +7,38 @@ function criarPrompt(candidato, descricaoVaga) {
   const textoCurriculo = JSON.stringify(candidato);
 
   return `
-    Você é um Recrutador Especialista. Analise o seguinte currículo para a vaga descrita.
-    
-    DESCRIÇÃO DA VAGA:
-    "${descricaoVaga}"
-    
-    DADOS DO CANDIDATO:
-    "${textoCurriculo}"
-    
-    Analise o "fit" (aderência) de 0 a 100.
-    Retorne APENAS um JSON neste formato: {"score": number, "reason": "string"}
-  `;
+    Você é um Recrutador Sênior especializado em avaliação de talentos.
+
+    Sua tarefa é avaliar o grau de aderência ("fit") entre um candidato e uma vaga, considerando:
+    - competências técnicas
+    - experiências profissionais
+    - formação
+    - tempo de experiência
+    - aderência ao perfil da vaga
+    - requisitos obrigatórios vs. desejáveis
+
+    ### DESCRIÇÃO DA VAGA
+    ${descricaoVaga}
+
+    ### DADOS DO CANDIDATO 
+    ${textoCurriculo}
+
+    ### INSTRUÇÕES
+    1. Compare cuidadosamente o perfil do candidato com os requisitos da vaga.
+    2. Atribua um score de 0 a 100, onde:
+      - 0 = nenhuma aderência
+      - 50 = aderência parcial
+      - 100 = aderência excelente
+    3. Justifique o score de forma objetiva, clara e curta (máx. 3 frases).
+
+    ### FORMATO DE RESPOSTA (obrigatório)
+    Responda **somente** com um JSON válido, sem qualquer texto adicional:
+
+    {
+      "score": number,
+      "reason": "string"
+    }
+    `;
 }
 
 async function rankear(curriculos, descricaoVaga) {
@@ -40,7 +61,7 @@ async function rankear(curriculos, descricaoVaga) {
           id: c.id || c._id,
           nome: c.nome,
           score: data.score || 0,
-          justificativa: data.reason || "Analisado pelo Gemini"
+          justificativa: data.reason
         });
 
       } catch (error) {

@@ -34,7 +34,7 @@ async function buscarCandidatosDaVaga(jobId) {
       totalPages = pages;
       page++;
 
-      // Pausa de 500ms entre as páginas para não estourar o rate limit
+      // Pausa entre as páginas para não estourar o rate limit
       await new Promise(r => setTimeout(r, 1000));
     } catch (err) {
       if (err.response?.status === 429) {
