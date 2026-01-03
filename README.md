@@ -3,6 +3,24 @@ Aplicativo Slack que automatiza a análise e classificação de currículos do Q
 
 <br>
 
+## ⌨️ Comandos
+
+Os seguintes comandos estão disponíveis no Slack após a instalação do aplicativo:
+
+<br>
+
+**1. /rankear-cv**
+
+Inicia o rankeamento de currículos a partir da seleção de uma vaga disponível. Ao final, gera uma planilha com a classificação de todos os candidatos.
+
+<br>
+
+**2. /clean-home**
+
+Limpa o histórico de mensagens do bot.
+
+<br>
+
 ## 📜 Pré-requisitos
 
 ![Git](https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white)
